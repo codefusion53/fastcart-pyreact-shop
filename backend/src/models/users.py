@@ -8,5 +8,5 @@ class User(CommonModel):
     email: EmailStr
 
 
-class UserUpdate(BaseModel):
+class UpdateUser(BaseModel):
     email: Optional[EmailStr]

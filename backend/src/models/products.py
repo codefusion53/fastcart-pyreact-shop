@@ -9,6 +9,6 @@ class Product(CommonModel):
     description: str
 
 
-class ProductUpdate(BaseModel):
+class UpdateProduct(BaseModel):
     name: Optional[str]
     description: Optional[str]
