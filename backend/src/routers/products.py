@@ -40,8 +40,7 @@ async def get_product(id: str):
 @router.post("/", response_model=Product, status_code=status.HTTP_201_CREATED)
 async def create_product(product: Product = Body(...)):
     product = jsonable_encoder(product)
-    # Let MongoDB assign a native ObjectId rather than storing a stringified one.
-    product.pop("_id", None)
+    product.pop("_id", None)  # let MongoDB assign a native ObjectId
     now = datetime.utcnow()
     product["created_at"] = now
     product["updated_at"] = now

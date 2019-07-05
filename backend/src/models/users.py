@@ -1,12 +1,22 @@
-from typing import Optional
-from pydantic import BaseModel, EmailStr
+from typing import Union, Optional
+from pydantic import BaseModel
 
 from models.common import CommonModel
 
 
 class User(CommonModel):
-    email: EmailStr
+    username: str
+    email: Union[str, None] = None
+    full_name: Union[str, None] = None
+    disabled: Union[bool, None] = None
+
+
+class UserInDB(User):
+    hashed_password: str
 
 
 class UpdateUser(BaseModel):
-    email: Optional[EmailStr]
+    username: Optional[str] = None
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    disabled: Optional[bool] = None

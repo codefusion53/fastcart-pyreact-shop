@@ -1,47 +1,41 @@
 # FastAPI + React Ecommerce
 
-A full-stack ecommerce app built with a **FastAPI + MongoDB** backend and a
-**Vite + React** frontend (React Router, React Query, Tailwind CSS). A Docker
-Compose setup runs MongoDB plus a Mongo Express admin UI for local development.
+A full-stack ecommerce app with a **FastAPI + MongoDB** backend and a
+**Vite + React** frontend (React Router, React Query, Redux, Tailwind CSS).
+Docker Compose runs MongoDB plus a Mongo Express admin UI for local dev.
 
 > **Status:** Work in progress. The backend exposes full CRUD for products and
-> users backed by MongoDB; the frontend has routing, data fetching, and a
-> product listing/detail UI under active development.
+> users under `/api/v1`, with JWT auth scaffolding under `/auth`. The frontend
+> has routing, data fetching, state management, and a product UI in progress.
 
 ## Tech stack
 
-| Layer     | Tools                                                              |
-| --------- | ------------------------------------------------------------------ |
-| Backend   | FastAPI, Uvicorn, Motor (async MongoDB driver), Pydantic           |
-| Database  | MongoDB (+ Mongo Express UI)                                        |
-| Frontend  | React 18, Vite, React Router, TanStack React Query, Tailwind CSS, Splide |
-| Tooling   | Docker Compose, python-dotenv                                      |
+| Layer     | Tools                                                                       |
+| --------- | --------------------------------------------------------------------------- |
+| Backend   | FastAPI, Uvicorn, Motor (async MongoDB), Pydantic, python-jose, passlib      |
+| Database  | MongoDB (+ Mongo Express UI)                                                 |
+| Frontend  | React 18, Vite, React Router, TanStack React Query, Redux, Tailwind CSS, Splide |
+| Tooling   | Docker Compose, python-dotenv                                               |
 
 ## Project structure
 
 ```
 .
-├── docker-compose.yml          # MongoDB + Mongo Express services
+├── docker-compose.yml          # MongoDB + Mongo Express
 ├── .env.example                # Copy to .env and fill in
 ├── backend/
 │   ├── requirements.txt
 │   └── src/
 │       ├── main.py             # ASGI entrypoint (uvicorn)
-│       ├── app.py              # App factory: CORS + router registration
-│       ├── config/             # Env loading + MongoDB URI assembly
+│       ├── app.py              # App factory: CORS + routers
+│       ├── config/             # Env loading + MongoDB URI
 │       ├── database/           # Motor async client
-│       ├── middlewares/        # CORS middleware
-│       ├── models/             # Pydantic models (User, Product, common base)
-│       └── routers/            # API routes (products, users)
+│       ├── middlewares/        # CORS
+│       ├── auth/               # JWT auth (passlib + python-jose)
+│       ├── models/             # Pydantic models
+│       └── routers/            # /api/v1 product & user routes
 └── frontend/
-    ├── package.json
-    ├── tailwind.config.cjs
-    └── src/
-        ├── api/                # API base URL
-        ├── services/           # Data-fetching services
-        ├── components/         # Header, Footer, Layout, ProductCard
-        ├── pages/              # Home, Product, About
-        └── styles/
+    └── src/                    # api, services, components, pages, redux, styles
 ```
 
 ## Prerequisites
@@ -52,22 +46,21 @@ Compose setup runs MongoDB plus a Mongo Express admin UI for local development.
 
 ## Getting started
 
-### 1. Environment variables
-
-Copy the example file and adjust as needed:
+### 1. Environment
 
 ```bash
 cp .env.example .env
 ```
 
-| Variable        | Purpose                                                        |
-| --------------- | -------------------------------------------------------------- |
-| `MONGO_USERNAME`, `MONGO_PASSWORD` | MongoDB credentials                         |
-| `MONGO_DB_HOST` | `localhost` on host, `mongo` inside Docker Compose             |
-| `MONGO_DB_PORT` | MongoDB port (default `27017`)                                 |
-| `MONGO_DB_NAME` | Database name (must not be empty)                              |
-| `CORS`          | Comma-separated allowed frontend origins                       |
-| `VITE_API_URL`  | Base URL the React app uses to reach the API                   |
+| Variable                      | Purpose                                          |
+| ----------------------------- | ------------------------------------------------ |
+| `MONGO_USERNAME` / `MONGO_PASSWORD` | MongoDB credentials                        |
+| `MONGO_DB_HOST`               | `localhost` on host, `mongo` inside Compose      |
+| `MONGO_DB_PORT` / `MONGO_DB_NAME` | MongoDB port / database name (non-empty)     |
+| `CORS`                        | Comma-separated allowed frontend origins         |
+| `SECRET_KEY`                  | JWT signing key (`openssl rand -hex 32`)         |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime                            |
+| `VITE_API_URL`                | API base URL for the React app (incl. `/api/v1`) |
 
 ### 2. Start MongoDB
 
@@ -90,7 +83,7 @@ cd src
 uvicorn main:app --reload         # or: python main.py
 ```
 
-API at `http://localhost:8000`, interactive docs at `http://localhost:8000/docs`.
+API at `http://localhost:8000`, docs at `http://localhost:8000/docs`.
 
 ### 4. Run the frontend
 
@@ -104,24 +97,25 @@ Vite serves the app at `http://localhost:5173`.
 
 ## API overview
 
-Resource ids are MongoDB `ObjectId`s. Updates are partial — send only the
-fields you want to change.
+Resource routes are prefixed with `/api/v1`. Ids are MongoDB `ObjectId`s, and
+updates are partial (send only the fields you want to change).
 
-| Method | Endpoint         | Description                | Success |
-| ------ | ---------------- | -------------------------- | ------- |
-| GET    | `/products/`     | List products              | 200     |
-| GET    | `/products/{id}` | Get a single product       | 200     |
-| POST   | `/products/`     | Create a product           | 201     |
-| PUT    | `/products/{id}` | Update a product (partial) | 200     |
-| DELETE | `/products/{id}` | Delete a product           | 204     |
+| Method | Endpoint                | Description                | Success |
+| ------ | ----------------------- | -------------------------- | ------- |
+| GET    | `/api/v1/products/`     | List products              | 200     |
+| GET    | `/api/v1/products/{id}` | Get a product              | 200     |
+| POST   | `/api/v1/products/`     | Create a product           | 201     |
+| PUT    | `/api/v1/products/{id}` | Update a product (partial) | 200     |
+| DELETE | `/api/v1/products/{id}` | Delete a product           | 204     |
+| POST   | `/auth/login`           | Log in (scaffold)          | 200     |
 
-The same set of routes exists for `/users/`. Full, auto-generated docs live at
-`/docs` (Swagger UI) and `/redoc`.
+The same product routes exist for `/api/v1/users/`. Auto-generated docs live at
+`/docs` and `/redoc`.
 
 ## Roadmap
 
+- [ ] Complete JWT login/registration and protect write routes
 - [ ] Product create/edit forms in the frontend
-- [ ] User authentication (registration, login, JWT)
 - [ ] Cart and checkout flow
 - [ ] Tests and CI
 
