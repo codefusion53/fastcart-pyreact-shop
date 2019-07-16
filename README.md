@@ -5,8 +5,8 @@ A full-stack ecommerce app with a **FastAPI + MongoDB** backend and a
 Docker Compose runs MongoDB plus a Mongo Express admin UI for local dev.
 
 > **Status:** Work in progress. The backend exposes full CRUD for products and
-> users under `/api/v1`, with JWT auth scaffolding under `/auth`. The frontend
-> has routing, data fetching, state management, and a product UI in progress.
+> users under `/api/v1`, plus JWT login/signup under `/auth`. The frontend has
+> routing, data fetching, Redux state, a login page, and a product UI in progress.
 
 ## Tech stack
 
@@ -31,11 +31,11 @@ Docker Compose runs MongoDB plus a Mongo Express admin UI for local dev.
 │       ├── config/             # Env loading + MongoDB URI
 │       ├── database/           # Motor async client
 │       ├── middlewares/        # CORS
-│       ├── auth/               # JWT auth (passlib + python-jose)
+│       ├── auth/               # JWT login/signup (passlib + python-jose)
 │       ├── models/             # Pydantic models
 │       └── routers/            # /api/v1 product & user routes
 └── frontend/
-    └── src/                    # api, services, components, pages, redux, styles
+    └── src/                    # api, services, components, pages, hooks, redux, auth, styles
 ```
 
 ## Prerequisites
@@ -97,8 +97,8 @@ Vite serves the app at `http://localhost:5173`.
 
 ## API overview
 
-Resource routes are prefixed with `/api/v1`. Ids are MongoDB `ObjectId`s, and
-updates are partial (send only the fields you want to change).
+Product/user routes are prefixed with `/api/v1`. Ids are MongoDB `ObjectId`s,
+and updates are partial (send only the fields you want to change).
 
 | Method | Endpoint                | Description                | Success |
 | ------ | ----------------------- | -------------------------- | ------- |
@@ -107,14 +107,16 @@ updates are partial (send only the fields you want to change).
 | POST   | `/api/v1/products/`     | Create a product           | 201     |
 | PUT    | `/api/v1/products/{id}` | Update a product (partial) | 200     |
 | DELETE | `/api/v1/products/{id}` | Delete a product           | 204     |
-| POST   | `/auth/login`           | Log in (scaffold)          | 200     |
+| POST   | `/auth/signup`          | Register a user            | 200     |
+| POST   | `/auth/login`           | Log in, returns a token    | 200     |
 
 The same product routes exist for `/api/v1/users/`. Auto-generated docs live at
 `/docs` and `/redoc`.
 
 ## Roadmap
 
-- [ ] Complete JWT login/registration and protect write routes
+- [ ] Protect write routes with the JWT dependency
+- [ ] Align the auth user record with the `User`/`UserInDB` model
 - [ ] Product create/edit forms in the frontend
 - [ ] Cart and checkout flow
 - [ ] Tests and CI
