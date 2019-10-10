@@ -1,13 +1,14 @@
 from typing import List
 from datetime import datetime
 
-from fastapi import APIRouter, Body, HTTPException, Response, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Response, status
 from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
 from bson.errors import InvalidId
 
 from database import db
 from models.users import User, UpdateUser
+from auth.utils import get_current_user
 
 
 router = APIRouter(
@@ -38,7 +39,7 @@ async def get_user(id: str):
 
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
-async def create_user(user: User = Body(...)):
+async def create_user(user: User = Body(...), current_user: dict = Depends(get_current_user)):
     user = jsonable_encoder(user)
     user.pop("_id", None)
     now = datetime.utcnow()
@@ -50,7 +51,7 @@ async def create_user(user: User = Body(...)):
 
 
 @router.put("/{id}", response_model=User)
-async def update_user(id: str, user: UpdateUser = Body(...)):
+async def update_user(id: str, user: UpdateUser = Body(...), current_user: dict = Depends(get_current_user)):
     oid = parse_object_id(id)
     update_data = {k: v for k, v in user.dict().items() if v is not None}
     if update_data:
@@ -65,7 +66,7 @@ async def update_user(id: str, user: UpdateUser = Body(...)):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(id: str):
+async def delete_user(id: str, current_user: dict = Depends(get_current_user)):
     oid = parse_object_id(id)
     result = await db["users"].delete_one({"_id": oid})
     if result.deleted_count == 1:

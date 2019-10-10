@@ -5,7 +5,7 @@ from models.common import CommonModel
 
 
 class User(CommonModel):
-    username: str
+    username: Union[str, None] = None
     email: Union[str, None] = None
     full_name: Union[str, None] = None
     disabled: Union[bool, None] = None

@@ -60,7 +60,8 @@ cp .env.example .env
 | `CORS`                        | Comma-separated allowed frontend origins         |
 | `SECRET_KEY`                  | JWT signing key (`openssl rand -hex 32`)         |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime                            |
-| `VITE_API_URL`                | API base URL for the React app (incl. `/api/v1`) |
+| `VITE_API_URL`                | API host for the React app (host only, no `/api/v1`) |
+| `VITE_TOKEN_KEY`              | localStorage key for the JWT (default `access_token`) |
 
 ### 2. Start MongoDB
 
@@ -98,7 +99,8 @@ Vite serves the app at `http://localhost:5173`.
 ## API overview
 
 Product/user routes are prefixed with `/api/v1`. Ids are MongoDB `ObjectId`s,
-and updates are partial (send only the fields you want to change).
+and updates are partial (send only the fields you want to change). Reads are
+public; **create/update/delete require a Bearer token** from `/auth/login`.
 
 | Method | Endpoint                | Description                | Success |
 | ------ | ----------------------- | -------------------------- | ------- |
@@ -108,15 +110,16 @@ and updates are partial (send only the fields you want to change).
 | PUT    | `/api/v1/products/{id}` | Update a product (partial) | 200     |
 | DELETE | `/api/v1/products/{id}` | Delete a product           | 204     |
 | POST   | `/auth/signup`          | Register a user            | 200     |
-| POST   | `/auth/login`           | Log in, returns a token    | 200     |
+| POST   | `/auth/login`           | Log in, returns a JWT      | 200     |
+| GET    | `/auth/me`              | Current user (requires JWT)| 200     |
 
 The same product routes exist for `/api/v1/users/`. Auto-generated docs live at
 `/docs` and `/redoc`.
 
 ## Roadmap
 
-- [ ] Protect write routes with the JWT dependency
-- [ ] Align the auth user record with the `User`/`UserInDB` model
+- [x] Protect write routes with the JWT dependency
+- [x] Align the auth user record with the `User`/`UserInDB` model
 - [ ] Product create/edit forms in the frontend
 - [ ] Cart and checkout flow
 - [ ] Tests and CI

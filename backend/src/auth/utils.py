@@ -1,13 +1,15 @@
 from typing import Union
 from datetime import datetime, timedelta
+
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
-from auth import SECRET_KEY, ALGORITHM, pwd_context
-from auth.models import TokenData, UserSignupSchema
+
+from auth import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, pwd_context
+from database import db
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 def verify_password(plain_password, hashed_password):
@@ -18,17 +20,13 @@ def hash_password(password: str):
     return pwd_context.hash(password)
 
 
-def create_access_token(user: str , expires_delta: Union[timedelta, None] = None):
+def create_access_token(subject: str, expires_delta: Union[timedelta, None] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    payload = {
-        "user": user,
-        "exp": expire
-    }
-    encoded_jwt = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+        expire = datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+    payload = {"sub": subject, "exp": expire}
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -39,27 +37,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email = payload.get("sub")
+        if email is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    # user = get_user(fake_users_db, username=token_data.username)
-    user = {}
+
+    user = await db["users"].find_one({"email": email})
     if user is None:
         raise credentials_exception
+    user["_id"] = str(user["_id"])
+    user.pop("hashed_password", None)
+    user.pop("password", None)
     return user
-
-
-def authenticate_user(fake_db, username: str, password: str):
-    user = {}
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
-
-
-def check_user(user: UserSignupSchema):
-    ...

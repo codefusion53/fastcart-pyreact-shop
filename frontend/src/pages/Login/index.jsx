@@ -1,20 +1,30 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { authService } from "@/services/auth.service";
-import { API_URL } from "@/api";
-
 
 export function Login() {
-    const [state, setState] = useState({ email: "", password: ""});
+    const [state, setState] = useState({ email: "", password: "" });
+    const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
         try {
-            await authService.login({email: state.email, password: state.password});
-        }catch(err) {
+            const response = await authService.login({
+                email: state.email,
+                password: state.password,
+            });
+            if (response?.access_token) {
+                navigate("/");
+            } else {
+                setError(response?.detail || "Login failed");
+            }
+        } catch (err) {
             console.error(err);
+            setError("Something went wrong. Please try again.");
         }
-    }  
+    };
 
     return (
         <section className="min-h-screen">
@@ -26,55 +36,52 @@ export function Login() {
                     />
                 </div>
                 <div className="w-full md:w-1/2 flex justify-center items-center">
-                <form 
-                    onSubmit={handleSubmit}
-                    className="shadow-xl rounded-xl w-full max-w-[400px] px-8 py-8 inline-flex flex-col items-center"
-                >
-                    <Link 
-                        to="/"
-                        className="mb-16 text-2xl text-center uppercase block text-gray-500"
+                    <form
+                        onSubmit={handleSubmit}
+                        className="shadow-xl rounded-xl w-full max-w-[400px] px-8 py-8 inline-flex flex-col items-center"
                     >
-                        Login
-                    </Link>
-                    <div className="flex flex-col py-2 mb-4 w-full">
-                        <label
-                            className="font-bold"
+                        <Link
+                            to="/"
+                            className="mb-16 text-2xl text-center uppercase block text-gray-500"
                         >
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            className="input py-2 outline-none border-b-2"
-                            placeholder="Email@example.com"
-                            onChange={(e) => setState({...state, email: e.target.value})}
-                        />
-                    </div>
-                    <div className="flex flex-col py-2 mb-6 w-full">
-                        <label
-                            className="font-bold"
+                            Login
+                        </Link>
+                        <div className="flex flex-col py-2 mb-4 w-full">
+                            <label className="font-bold">Email</label>
+                            <input
+                                type="email"
+                                value={state.email}
+                                className="input py-2 outline-none border-b-2"
+                                placeholder="email@example.com"
+                                onChange={(e) => setState({ ...state, email: e.target.value })}
+                            />
+                        </div>
+                        <div className="flex flex-col py-2 mb-6 w-full">
+                            <label className="font-bold">Password</label>
+                            <input
+                                className="input py-2 outline-none border-b-2"
+                                type="password"
+                                value={state.password}
+                                placeholder="*****"
+                                onChange={(e) => setState({ ...state, password: e.target.value })}
+                            />
+                        </div>
+
+                        {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
+
+                        <button
+                            type="submit"
+                            className="btn bg-yellow-500 text-white rounded-lg w-32"
                         >
-                            Password
-                        </label>
-                        <input
-                            className="input py-2 outline-none border-b-2"
-                            type="password"
-                            placeholder="*****"
-                            onChange={(e) => setState({...state, password: e.target.value})}
-                        />
-                    </div>
+                            Entrar
+                        </button>
 
-                    <button
-                        className="btn bg-yellow-500 text-white rounded-lg w-32"
-                    >
-                        Entrar
-                    </button>
-
-                    <Link className="block text-center w-full mt-6">
-                        Don't you have an account?
-                    </Link>
-                </form>
+                        <Link to="/" className="block text-center w-full mt-6">
+                            Don't have an account?
+                        </Link>
+                    </form>
                 </div>
             </div>
         </section>
-    )
+    );
 }

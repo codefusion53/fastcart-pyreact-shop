@@ -1,13 +1,14 @@
 from typing import List
 from datetime import datetime
 
-from fastapi import APIRouter, Body, HTTPException, Response, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Response, status
 from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
 from bson.errors import InvalidId
 
 from database import db
 from models.products import Product, UpdateProduct
+from auth.utils import get_current_user
 
 
 router = APIRouter(
@@ -38,7 +39,7 @@ async def get_product(id: str):
 
 
 @router.post("/", response_model=Product, status_code=status.HTTP_201_CREATED)
-async def create_product(product: Product = Body(...)):
+async def create_product(product: Product = Body(...), current_user: dict = Depends(get_current_user)):
     product = jsonable_encoder(product)
     product.pop("_id", None)  # let MongoDB assign a native ObjectId
     now = datetime.utcnow()
@@ -50,7 +51,7 @@ async def create_product(product: Product = Body(...)):
 
 
 @router.put("/{id}", response_model=Product)
-async def update_product(id: str, product: UpdateProduct = Body(...)):
+async def update_product(id: str, product: UpdateProduct = Body(...), current_user: dict = Depends(get_current_user)):
     oid = parse_object_id(id)
     update_data = {k: v for k, v in product.dict().items() if v is not None}
     if update_data:
@@ -65,7 +66,7 @@ async def update_product(id: str, product: UpdateProduct = Body(...)):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_product(id: str):
+async def delete_product(id: str, current_user: dict = Depends(get_current_user)):
     oid = parse_object_id(id)
     result = await db["products"].delete_one({"_id": oid})
     if result.deleted_count == 1:

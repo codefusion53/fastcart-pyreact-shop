@@ -1,9 +1,7 @@
-export const Home = () => {
+export const About = () => {
     return (
         <>
-        <section>
-            Home
-        </section>
+            <section>About</section>
         </>
-    )
-}
+    );
+};
